@@ -2,6 +2,7 @@ using CloudinaryDotNet;
 using dotenv.net;
 using EventHub.DataAccess.Data;
 using EventHub.DataAccess.Repository;
+using EventHub.DataAccess.Repository.Admin;
 using EventHub.Initializers;
 using EventHub.Models;
 using EventHub.Services;
@@ -46,6 +47,9 @@ builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<RoleInitializer>();
 
+builder.Services.AddScoped<IAdminEventRepository, AdminEventRepository>();
+builder.Services.AddScoped<IAdminTicketTypeRepository, AdminTicketTypeRepository>();
+builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();

@@ -1,5 +1,6 @@
 using EventHub.DataAccess.Data;
 using EventHub.DataAccess.Repository;
+using EventHub.Initializers;
 using EventHub.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -55,4 +56,17 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.Run();
+
+// ========================FOR INITIALIZE===========================//
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<EventManagementSystemDbContext>();
+    var userManager = services.GetRequiredService<UserManager<User>>();
+    var roleInitializer = services.GetRequiredService<RoleInitializer>();
+
+    await roleInitializer.InitializeRolesAsync();
+    await DbInitializer.SeedAsync(context, userManager);
+}
+
+    app.Run();

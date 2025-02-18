@@ -1,4 +1,5 @@
 using EventHub.DataAccess.Data;
+using EventHub.DataAccess.Repository;
 using EventHub.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,10 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 })
     .AddDefaultUI()
     .AddEntityFrameworkStores<EventManagementSystemDbContext>();
+
+builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
 
 var app = builder.Build();
 

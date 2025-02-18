@@ -82,7 +82,7 @@ public class DbInitializer
 
     private static async Task SeedAdminUserAsync(UserManager<User> userManager)
     {
-        string adminEmail = "admin@eventjui.com";
+        string adminEmail = "admin@hub.com";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
         if (adminUser == null)

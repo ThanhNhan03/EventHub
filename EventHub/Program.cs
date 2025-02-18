@@ -1,7 +1,12 @@
+using CloudinaryDotNet;
+using dotenv.net;
 using EventHub.DataAccess.Data;
 using EventHub.DataAccess.Repository;
 using EventHub.Initializers;
 using EventHub.Models;
+using EventHub.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,9 +36,28 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     .AddDefaultUI()
     .AddEntityFrameworkStores<EventManagementSystemDbContext>();
 
+/* ====Provide ClaimsPrincipal and Handle concurrent connection to Database issues in Blazor==== */
+builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+builder.Services.AddScoped<UserManager<User>>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddMemoryCache();
+/* ====Provide ClaimsPrincipal and Handle concurrent connection to Database issues in Blazor==== */
+
+
+builder.Services.AddScoped<RoleInitializer>();
+
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
+builder.Services.AddScoped<IEventService, EventService>();
+
+builder.Services.AddSingleton(sp =>
+{
+    DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
+    var cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
+    cloudinary.Api.Secure = true;
+    return cloudinary;
+});
 
 var app = builder.Build();
 

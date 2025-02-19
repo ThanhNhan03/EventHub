@@ -1,8 +1,8 @@
-﻿using EventManagementSystem.Models;
+﻿using EventHub.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace EventManagementSystem.Areas.Admin.Controllers
+namespace EventHub.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin")]

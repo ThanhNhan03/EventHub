@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using EventHub.App;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,9 @@ builder.Services.AddControllersWithViews(options =>
     options.ModelBinderProviders.Insert(0, new DateOnlyModelBinderProvider()); // Custom ModelBinder
     /*options.Filters.Add<SaveRefererFilter>();*/ // Custom Filter *Failed*.
 });
+
+builder.Services.AddRazorPages(); // for identity ui
+builder.Services.AddRazorComponents().AddInteractiveServerComponents(); // Add blazor server
 
 //Inject the DbContext
 builder.Services.AddDbContext<EventManagementSystemDbContext>(options =>
@@ -88,6 +92,12 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+
+app.MapRazorPages(); // for identity
+
+app.UseAntiforgery(); // blazor protect anonymous data
+
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode(); // plug-in blazor server
 
 // ========================FOR INITIALIZE===========================//
 using (var scope = app.Services.CreateScope())

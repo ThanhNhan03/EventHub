@@ -1,0 +1,206 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using EventHub.Models
+
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+@model Event
+
+<div class="container-fluid bg-dark py-4 px-4">
+    @if (TempData["Success"] is not null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>@TempData["Success"]</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    <div class="text-white mb-2">
+        <div class="row align-items-center">
+            <div class="col-md-9 text-start">
+                <span class="h1">@Model.Title</span>
+                <span class="text-secondary">visits: @Model.PageVisitorCount</span>
+            </div>
+            <div class="col-md-3 text-secondary text-end">
+                <p class="mb-0">Posted by @Model.User.DisplayName</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <img src="@Model.Image" class="img-fluid mb-3" alt="Event Image" />
+            <p class="text-secondary">@Model.ShortDescription</p>
+            <p>@Model.Description</p>
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#showRegisteredModal">Users registered</button>
+                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#FeedbackModal">Feedback</button>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="bg-secondary text-black p-3 mb-3 rounded-3">
+                <h4 class="fw-bold">Event Details</h4>
+                <hr />
+                <p><strong>Country:</strong> @Model.Country</p>
+                <p><strong>Address:</strong> @Model.Address</p>
+                <p><strong>Venue Name:</strong> @Model.VenueName</p>
+                <p><strong>Start Date:</strong> @Model.StartDate.ToString("MMMM dd, yyyy")</p>
+                <p><strong>End Date:</strong> @Model.EndDate.ToString("MMMM dd, yyyy")</p>
+                <p>
+                    <strong>Transports:</strong>
+                    @if (Model.Transports != null && Model.Transports.Any())
+                    {
+                        @foreach (var transport in Model.Transports)
+                        {
+                            <span>@transport</span>
+                        }
+                    }
+                    else
+                    {
+                        <span>No transport information available.</span>
+                    }
+                </p>
+            </div>
+
+            <div class="mb-3">
+                <iframe src="@(ViewBag.GoogleMap)"
+                        width="100%" height="250" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+
+            <div class="bg-warning-subtle text-black p-3 rounded-3">
+                <form asp-action="ConfirmTicket" method="get">
+                    <div class="form-group">
+                        <label for="selectticketTypeId" class="control-label">Select Ticket</label>
+                        <select name="ticketTypeId" class="form-select" id="selectticketTypeId">
+                            @foreach (var ticketType in Model.TicketTypes)
+                            {
+                                <option value="@ticketType.Id">
+                                    @ticketType.Name - @(ticketType.Price.ToString("C")) @(ticketType.MaxCapital <= ticketType.TotalTicketsSold ? "(SOLD OUT)" : "")
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <button class="btn btn-danger mt-3">Register</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <div class="modal fade" id="FeedbackModal" tabindex="-1" aria-labelledby="FeedbackModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="FeedbackModalLabel">New message</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="recipient-name" class="col-form-label">Recipient:</label>
+                            <input type="text" class="form-control bg-dark-subtle" id="recipient-name" value="@((await UserManager.GetUserAsync(User)).DisplayName)" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message-text" class="col-form-label">Message:</label>
+                            <textarea class="form-control" id="message-text"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Send message</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="showRegisteredModal" aria-hidden="true" aria-labelledby="showRegisteredModalLabel" tabindex="-1">
+        @if (Model.TicketTypes.Count == 1)
+        {
+            <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="showRegisteredModalLabel">
+                            @Model.TicketTypes.First().Name
+                        </h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        @{
+                            List<string> displayNames = [];
+                            foreach (var ticket in Model.TicketTypes.First().Tickets)
+                            {
+                                displayNames.Add(ticket.User.DisplayName);
+                            }
+                            string displayAllUserNames = string.Join(", ", displayNames);
+                        }
+                        <p>@displayAllUserNames</p>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="modal-dialog modal-dialog-scrollable modal-sm">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header bg-secondary p-2">
+                        <i class="bi bi-card-list"></i>
+                        <button type="button" class="btn-close small" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <select id="ticketTypeSelect" class="form-select">
+                            <option class="text-secondary">
+                                Select here
+                            </option>
+                            @foreach (var ticketType in Model.TicketTypes)
+                            {
+                                <option data-bs-target="#@($"ticketType{ticketType.Id}")" data-bs-toggle="modal">
+                                    @ticketType.Name
+                                </option>
+                            }
+                        </select>
+                        <small class="text-secondary">Select to show a list of users registered below.</small>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @foreach (var ticketType in Model.TicketTypes)
+    {
+        <div class="modal fade" id="@($"ticketType{ticketType.Id}")" aria-hidden="true"
+             aria-labelledby="@($"ticketType{ticketType.Id}Label")" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="@($"ticketType{ticketType.Id}Label")">@ticketType.Name</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        @{
+                            List<string> displayNames = [];
+                            foreach (var ticket in ticketType.Tickets)
+                            {
+                                displayNames.Add(ticket.User.DisplayName);
+                            }
+                            string showUserName = string.Join(", ", displayNames);
+                        }
+                        <p>@showUserName</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<script>
+    document.getElementById('ticketTypeSelect').addEventListener('change', function () {
+        var selectedOption = this.options[this.selectedIndex];
+        var targetModal = selectedOption.getAttribute('data-bs-target');
+        if (targetModal) {
+            var modal = new bootstrap.Modal(document.querySelector(targetModal));
+            modal.show();
+        }
+    });
+</script>

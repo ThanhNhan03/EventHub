@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 
-namespace EventManagementSystem.ModelBinders
+namespace EventHub.ModelBinders
 {
     public class DateOnlyModelBinderProvider : IModelBinderProvider
     {

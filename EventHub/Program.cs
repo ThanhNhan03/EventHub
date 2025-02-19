@@ -6,7 +6,7 @@ using EventHub.DataAccess.Repository.Admin;
 using EventHub.Initializers;
 using EventHub.Models;
 using EventHub.Services;
-using EventManagementSystem.ModelBinders;
+using EventHub.ModelBinders;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;

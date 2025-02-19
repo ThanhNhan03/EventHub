@@ -1,4 +1,4 @@
-﻿namespace EventManagementSystem.Utilities
+﻿namespace EventHub.Utilities
 {
     public class PaginatedList<T> : List<T>
     {

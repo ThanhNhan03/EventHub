@@ -63,6 +63,7 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
+
 builder.Services.AddSingleton(sp =>
 {
     DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
@@ -86,12 +87,22 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
+      name: "areas",
+      pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}"
+    );
+app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
+    pattern: "{controller=Home}/{action=Index}/{id?}"
+    );
+app.MapControllerRoute(
+    name: "catchall",
+    pattern: "{*url}",
+    defaults: new { controller = "CatchAll", action = "Index" }
+    );
 
 app.MapRazorPages(); // for identity
 

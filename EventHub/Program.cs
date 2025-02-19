@@ -6,6 +6,7 @@ using EventHub.DataAccess.Repository.Admin;
 using EventHub.Initializers;
 using EventHub.Models;
 using EventHub.Services;
+using EventManagementSystem.ModelBinders;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
@@ -14,7 +15,11 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.ModelBinderProviders.Insert(0, new DateOnlyModelBinderProvider()); // Custom ModelBinder
+    /*options.Filters.Add<SaveRefererFilter>();*/ // Custom Filter *Failed*.
+});
 
 //Inject the DbContext
 builder.Services.AddDbContext<EventManagementSystemDbContext>(options =>

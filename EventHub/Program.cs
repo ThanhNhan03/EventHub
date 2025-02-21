@@ -53,7 +53,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddMemoryCache();
 /* ====Provide ClaimsPrincipal and Handle concurrent connection to Database issues in Blazor==== */
 
-
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<RoleInitializer>();
 
 builder.Services.AddScoped<IAdminEventRepository, AdminEventRepository>();

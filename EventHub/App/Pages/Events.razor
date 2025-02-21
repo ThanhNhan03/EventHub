@@ -1,0 +1,311 @@
+﻿@page "/events/{categoryname?}"
+@rendermode InteractiveServer
+
+<div class="jumbotron jumbotron-@CategoryName-event pt-5">
+    <div class="container-fluid d-flex justify-content-center">
+        <h2 class="display-5 text-white bg-danger px-2 rounded-3" style="width:fit-content">
+            <strong style="font-weight:600;">@(($"{CategoryName} EVENTS").ToUpper())</strong>
+        </h2>
+    </div>
+</div>
+<div class="container-fluid event-container pt-4 pb-5 bg-dark">
+    <p class="h2 fw-bold text-center">Upcomming @CategoryName event</p>
+    <div class="row">
+        @if (UpComingEvents is not null && UpComingEvents.Count > 0)
+        {
+            for (int i = 0; i < UpComingEvents.Count; i++)
+            {
+                <div class="col-lg-3 col-md-4 mb-3 px-1 card-container"
+                     style="@(CurrentGroup_Up == GetGroup(i) ? "display: block;" : "display: none;")">
+                    <div class="card bg-dark text-white border-secondary">
+                        <div class="img-container" style="height: 12rem; overflow: hidden;">
+                            <img src="@UpComingEvents[i].Image"
+                                 class="card-img-top" alt="Event Image"
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div class="card-body" style="height:180px">
+                            <h5 class="card-title">@UpComingEvents[i].Title</h5>
+                            <hr />
+                            <p class="card-text">@(UpComingEvents[i].ShortDescription.Length > 48 ? UpComingEvents[i].ShortDescription.Substring(0, 48) + "..." : UpComingEvents[i].ShortDescription)</p>
+                            <small class="text-end text-secondary">@UpComingEvents[i].Country - @UpComingEvents[i].StartDate</small>
+                        </div>
+                        <a href="/event/details/@UpComingEvents[i].Id" class="card-link p-2 text-center">Enter</a>
+                        <div class="container px-2 pb-3">
+                            <div class="progress bg-black">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger" role="progressbar" style="width: @(processDays[i] + "%");" aria-valuemax="80">
+                                </div>
+                                <div class="ps-2">
+                                    start in @CalcUpcommingDate(UpComingEvents[i].StartDate) days
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="container-fluid d-flex align-items-center justify-content-center" style="height:460px;">
+                <div class="text-center">
+                    <h2></h2>
+                </div>
+            </div>
+            <div class="pagination-dots text-center">
+                @for (int i = 1; i <= 3; i++)
+                {
+                    int selected = i;
+                    <span class="dot"></span>
+                }
+            </div>
+        }
+    </div>
+    <div class="pagination-dots text-center">
+        @for (int i = 1; i <= TotalUpComingPages; i++)
+        {
+            int selected = i;
+            string filter = "upcomming";
+            <span class="dot @(CurrentGroup_Up == selected ? "active" : "")"
+                  @onclick="() => ShowGroup(selected, filter)"></span>
+        }
+    </div>
+    <hr />
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <span class="h5 fw-bold ">Other @CategoryName event</span>
+        </div>
+        <div class="col-md-9">
+            <form class="container-fluid">
+                <div class="input-group justify-content-end">
+                    <input type="text"
+                           class="border-0"
+                           placeholder="Search on @(string.IsNullOrEmpty(CategoryName) ? "events" : CategoryName)."
+                           style="max-width:350px;"
+                           @bind-value="SearchText"
+                           @bind-value:event="oninput"
+                           @onkeyup="Search">
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row overflow-x-auto">
+        @if (OtherEvents is not null && OtherEvents.Count > 0)
+        {
+            for (int i = 0; i < OtherEvents.Count(); i++)
+            {
+                <div class="col-lg-3 col-md-4 mb-3 px-1 card-container"
+                     style="@(CurrentGroup_All == GetGroup(i) ? "display: block;" : "display: none;")">
+                    <div class="card bg-dark text-white border-secondary">
+                        <div class="img-container" style="height: 12rem; overflow: hidden;">
+                            <img src="@OtherEvents[i].Image"
+                                 class="card-img-top" alt="Event Image"
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div class="card-body" style="height:180px">
+                            <h5 class="card-title">@OtherEvents[i].Title</h5>
+                            <hr />
+                            <p class="card-text">@(OtherEvents[i].ShortDescription.Length > 48 ? OtherEvents[i].ShortDescription.Substring(0, 48) + "..." : OtherEvents[i].ShortDescription)</p>
+                            <small class="text-end text-secondary">@OtherEvents[i].Country - @OtherEvents[i].StartDate</small>
+                        </div>
+                        <a href="/event/details/@OtherEvents[i].Id" class="card-link p-2 text-center">Enter</a>
+                    </div>
+                </div>
+            }
+            <div class="pagination-dots text-center">
+                @for (int i = 1; i <= TotalOtherPages; i++)
+                {
+                    int selected = i;
+                    <span class="dot @(CurrentGroup_All == selected ? "active" : "")"
+                          @onclick="() => ShowGroup(selected)"></span>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="container-fluid d-flex align-items-center justify-content-center" style="height:430px;">
+                <div class="text-center">
+                    <h2>Event not found.</h2>
+                    <img src="imgs/eventnotfound.png" style="width:350px;" />
+                </div>
+            </div>
+            <div class="pagination-dots text-center">
+                @for (int i = 1; i <= 3; i++)
+                {
+                    int selected = i;
+                    <span class="dot"></span>
+                }
+            </div>
+        }
+    </div>
+
+</div>
+
+@code {
+    //[Inject]
+    //private IEventRepository EventRepository { get; set; } = default!;
+    [Inject]
+    private IEventService EventService { get; set; } = default!;
+
+    [Inject]
+    private IUserService UserService { get; set; } = default!;
+
+    public List<Event> TempEvents { get; private set; } = [];
+    public List<Event> OtherEvents { get; private set; } = [];
+    public List<Event> UpComingEvents { get; private set; } = [];
+
+    private int CurrentGroup_Up { get; set; } = 1;
+    private int CurrentGroup_All { get; set; } = 1;
+
+    private int TotalUpComingPages { get; set; } = default;
+    private int TotalOtherPages { get; set; } = default;
+
+    private string SearchText = "";
+
+    [Parameter]
+    public string? CategoryName { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        // Wait for UserService initialization
+        //if (!UserService.IsInitialized)
+        //{
+        //    await UserService.Initialization;
+        //}
+        InitializeEventCards();
+    }
+
+    private void InitializeEventCards()
+    {
+        //if (!UserService.IsInitialized)
+        //{
+        //    return;
+        //}
+
+        CategoryName ??= string.Empty;
+
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        //TempEvents = await EventRepository.GetAllByTypeAsync(CategoryName);
+        if (Enum.TryParse(typeof(Category), CategoryName, true, out var existingCategory))
+        {
+            TempEvents = EventService.Events.Where(e => e.Category.Equals((Category)existingCategory))
+                .Where(e => e.StartDate >= today)
+                .ToList();
+        }
+        else
+        {
+            TempEvents = EventService.Events.Where(e => e.StartDate >= today).ToList();
+        }
+
+        if (TempEvents is not null)
+        {
+            UpComingEvents = [.. TempEvents.OrderBy(e => e.StartDate).Take(12)];
+
+            OtherEvents = [.. TempEvents.Where(other => !UpComingEvents.Contains(other))];
+
+            TotalOtherPages = (int)Math.Ceiling((double)OtherEvents.Count() / 4);
+            TotalUpComingPages = (int)Math.Ceiling((double)UpComingEvents.Count() / 4);
+
+            CalcWidthProcress(UpComingEvents);
+        }
+    }
+
+    private int GetGroup(int index)
+    {
+        return index / (3 + 1) + 1;
+    }
+
+    private void ShowGroup(int group, string filter = "all")
+    {
+        if (filter == "upcomming")
+            CurrentGroup_Up = group;
+        else
+            CurrentGroup_All = group;
+    }
+
+    private int CalcUpcommingDate(DateOnly dateOnly)
+    {
+        var days = (dateOnly.ToDateTime(new TimeOnly(0)) - DateTime.Now).Days;
+        return days;
+    }
+
+    private List<int> processDays = [];
+    private void CalcWidthProcress(List<Event> events)
+    {
+        int maxDay = 0;
+        foreach (var ev in events)
+        {
+            var day = (ev.StartDate.ToDateTime(new TimeOnly(0)) - DateTime.Now).Days;
+            if (maxDay < day)
+                maxDay = day;
+            processDays.Add(day);
+        }
+
+        for (int i = 0; i < processDays.Count; i++)
+        {
+            processDays[i] = (int)((float)processDays[i] / maxDay * 60);
+        }
+    }
+
+    private void Search()
+    {
+        OtherEvents.Clear();
+        if (EventService.Events is not null)
+        {
+            if (SearchText.Length >= 2)
+            {
+                OtherEvents = [.. SearchEventByType(SearchText, CategoryName, TempEvents)];
+            }
+            else
+            {
+                OtherEvents = TempEvents;
+            }
+            OtherEvents = [.. OtherEvents.Where(other => !UpComingEvents.Any(ue => ue.Id == other.Id))];
+            TotalOtherPages = (int)Math.Ceiling((double)OtherEvents.Count() / 4);
+        }
+        //if (EventRepository is not null)
+        //{
+        //    if (SearchText.Length >= 2)
+        //    {
+        //        OtherEvents = [.. EventRepository.SearchEventByType(SearchText, CategoryName, TempEvents)];
+        //    }
+        //    else
+        //    {
+        //        OtherEvents = TempEvents;
+        //    }
+        //    OtherEvents = [.. OtherEvents.Where(other => !UpComingEvents.Any(ue => ue.Id == other.Id))];
+        //    TotalOtherPages = (int)Math.Ceiling((double)OtherEvents.Count() / 4);
+        //}
+    }
+
+    public IEnumerable<Event> SearchEventByType(string searchQuery, string? typeName, List<Event>? tempEvents)
+    {
+        if (tempEvents is not null && tempEvents.Count != 0)
+        {
+            return tempEvents
+                .Where(e => e.Title.Contains(searchQuery, StringComparison.InvariantCultureIgnoreCase) ||
+                e.ShortDescription.Contains(searchQuery, StringComparison.InvariantCultureIgnoreCase) ||
+                e.Description.Contains(searchQuery, StringComparison.InvariantCultureIgnoreCase) ||
+                e.Country.Contains(searchQuery, StringComparison.InvariantCultureIgnoreCase) ||
+                e.Address.Contains(searchQuery, StringComparison.InvariantCultureIgnoreCase));
+        }
+        else if (Enum.TryParse(typeof(Category), typeName, true, out var existingCategory))
+        {
+            return EventService.Events
+            .Where(e => e.Category.Equals((Category)existingCategory))
+            .Where(e => e.Title.Contains(searchQuery) ||
+                e.ShortDescription.Contains(searchQuery) ||
+                e.Description.Contains(searchQuery) ||
+                e.Country.Contains(searchQuery) ||
+                e.Address.Contains(searchQuery));
+        }
+        else
+        {
+            return EventService.Events
+            .Where(e => e.Title.Contains(searchQuery) ||
+            e.ShortDescription.Contains(searchQuery) ||
+            e.Description.Contains(searchQuery) ||
+            e.Country.Contains(searchQuery) ||
+            e.Address.Contains(searchQuery));
+        }
+    }
+}

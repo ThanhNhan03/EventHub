@@ -1,7 +1,7 @@
 ﻿<header>
     <nav class="navbar navbar-expand-lg bg-dark border-bottom border-secondary fixed-top">
         <div class="container">
-            <a class="navbar-brand text-bg-danger px-2 rounded-2 fw-bold" href="/home">EventJui</a>
+            <a class="navbar-brand text-bg-danger px-2 rounded-2 fw-bold" href="/home">EventHub</a>
             <button class="navbar-toggler bg-danger" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -123,12 +123,12 @@
         </div>
         <div class="offcanvas-body text-white bg-dark" style="border-radius: 20px 0 0 20px;">
             <div class="list-group">
-                <a id="manage" class="btn btn-outline-danger text-start nav-link ps-2 text-white" href="Identity/Account/Manage/Index" title="Manage">
+                <a id="manage" class="btn btn-outline-danger text-start nav-link ps-2 text-white" href="/Identity/Account/Manage" title="Manage">
                     Hello @(CurrentUser.DisplayName)
                 </a>
                 <hr />
-                <form>
-                    <a id="logout" href="/Identity/Account/Logout" class="btn btn-outline-danger text-start nav-link ps-2 text-white">Logout</a>
+                <form id="logoutForm" method="post" action="/Identity/Account/Logout">
+                    <button id="logout" type="submit" class="btn btn-outline-danger text-start nav-link ps-2 text-white w-100">Logout</button>
                 </form>
             </div>
         </div>

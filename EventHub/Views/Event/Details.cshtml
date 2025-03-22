@@ -195,12 +195,17 @@
 }
 
 <script>
-    document.getElementById('ticketTypeSelect').addEventListener('change', function () {
-        var selectedOption = this.options[this.selectedIndex];
-        var targetModal = selectedOption.getAttribute('data-bs-target');
-        if (targetModal) {
-            var modal = new bootstrap.Modal(document.querySelector(targetModal));
-            modal.show();
+    document.addEventListener('DOMContentLoaded', function() {
+        var ticketTypeSelect = document.getElementById('ticketTypeSelect');
+        if (ticketTypeSelect) {
+            ticketTypeSelect.addEventListener('change', function () {
+                var selectedOption = this.options[this.selectedIndex];
+                var targetModal = selectedOption.getAttribute('data-bs-target');
+                if (targetModal) {
+                    var modal = new bootstrap.Modal(document.querySelector(targetModal));
+                    modal.show();
+                }
+            });
         }
     });
 </script>

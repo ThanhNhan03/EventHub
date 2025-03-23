@@ -131,8 +131,65 @@
                 </div>
             </div>
 
-            <div class="card bg-dark text-light">
-                <div class="card-header">
+            <!-- New Registered Events card -->
+    <div class="card bg-dark text-light mb-4">
+        <div class="card-header">
+            <h4>Registered Events</h4>
+        </div>
+        <div class="card-body">
+            @if (ViewBag.RegisteredEvents != null && ((IEnumerable<Event>)ViewBag.RegisteredEvents).Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Event Name</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var evt in (IEnumerable<Event>)ViewBag.RegisteredEvents)
+                            {
+                                <tr>
+                                    <td>@evt.Title</td>
+                                    <td>@evt.StartDate.ToString("dd/MM/yyyy")</td>
+                                    <td>@evt.EndDate.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @{
+                                            var now = DateTime.Now;
+                                            if (evt.StartDate > DateOnly.FromDateTime(now))
+                                            {
+                                                <span class="badge bg-info">Upcoming</span>
+                                            }
+                                            else if (evt.EndDate < DateOnly.FromDateTime(now))
+                                            {
+                                                <span class="badge bg-secondary">Past</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Ongoing</span>
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-area="" asp-controller="Events" asp-action="Detail" asp-route-id="@evt.Id" 
+                                           class="btn btn-outline-info btn-sm">View Event</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No events registered</p>
+            }
+        </div>
+                @* <div class="card-header">
                     <h4>Events</h4>
                 </div>
                 <div class="card-body">
@@ -170,7 +227,7 @@
                     {
                         <p class="text-muted">No events found</p>
                     }
-                </div>
+                </div> *@
             </div>
         </div>
     </div>

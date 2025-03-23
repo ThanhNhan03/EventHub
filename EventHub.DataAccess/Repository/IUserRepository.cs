@@ -16,5 +16,6 @@ namespace EventHub.DataAccess.Repository
         public Task<IdentityResult> ChangeDisplayNameAsync(int userId, string newDisplayName);
         public Task<IdentityResult> ChangeEmailAsync(int userId, string confirmPassword);
         public Task<IdentityResult> ChangePasswordAsync(int userId, string newPassword);
+        public Task<IEnumerable<Event>> GetRegisteredEventsAsync(string userId);
     }
 }

@@ -67,6 +67,7 @@ namespace EventHub.Areas.Admin.Controllers
 
             var roles = await _userManager.GetRolesAsync(user);
             ViewBag.Roles = roles;
+            ViewBag.RegisteredEvents = await _userRepository.GetRegisteredEventsAsync(id);
 
             return View(user);
         }

@@ -161,5 +161,23 @@ namespace EventHub.DataAccess.Repository
                 throw new ArgumentException("User not found.");
             }
         }
+
+        public async Task<IEnumerable<Event>> GetRegisteredEventsAsync(string userId)
+        {
+            var user = await _eventManagementSystemDbContext.Users
+                .Include(u => u.Tickets)
+                    .ThenInclude(t => t.TicketType)
+                        .ThenInclude(tt => tt.Event)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+        
+            if (user?.Tickets == null)
+                return Enumerable.Empty<Event>();
+        
+            return user.Tickets
+                .Select(t => t.TicketType?.Event)
+                .Where(e => e != null)
+                .Cast<Event>()
+                .Distinct();
+        }
     }
 }

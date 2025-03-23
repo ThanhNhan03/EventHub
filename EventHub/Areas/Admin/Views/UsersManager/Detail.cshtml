@@ -175,7 +175,7 @@
                                         }
                                     </td>
                                     <td>
-                                        <a asp-area="" asp-controller="Events" asp-action="Detail" asp-route-id="@evt.Id" 
+                                        <a asp-area="" asp-controller="event" asp-action="details" asp-route-id="@evt.Id" 
                                            class="btn btn-outline-info btn-sm">View Event</a>
                                     </td>
                                 </tr>
@@ -189,46 +189,6 @@
                 <p class="text-muted">No events registered</p>
             }
         </div>
-                @* <div class="card-header">
-                    <h4>Events</h4>
-                </div>
-                <div class="card-body">
-                    @if (Model.Events != null && Model.Events.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-dark table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Title</th>
-                                        <th>Date</th>
-                                        <th>Category</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var evt in Model.Events)
-                                    {
-                                        <tr>
-                                            <td>@evt.Id</td>
-                                            <td>@evt.Title</td>
-                                            <td>@evt.StartDate.ToString("dd/MM/yyyy") - @evt.EndDate.ToString("dd/MM/yyyy")</td>
-                                            <td>@evt.Category</td>
-                                            <td>
-                                                <a href="#" class="btn btn-sm btn-outline-info">View</a>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="text-muted">No events found</p>
-                    }
-                </div> *@
-            </div>
         </div>
     </div>
 </div>

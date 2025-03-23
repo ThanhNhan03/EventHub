@@ -1,5 +1,150 @@
-﻿<div class="container-fluid bg-dark py-5">
-    <p class="h1">
-        Edit User
-    </p>
+﻿@model EventHub.Models.User
+
+<div class="container-fluid bg-dark py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="text-light">Edit User</h1>
+            </div>
+            <div class="col-md-4 text-end">
+                <a asp-action="Index" class="btn btn-outline-light">Back to List</a>
+                <a asp-action="Detail" asp-route-id="@Model.Id" class="btn btn-info">View Details</a>
+            </div>
+        </div>
+    </div>
 </div>
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h4>Edit User Information</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="UserName" class="control-label">Username</label>
+                                    <input asp-for="UserName" class="form-control" />
+                                    <span asp-validation-for="UserName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="DisplayName" class="control-label">Display Name</label>
+                                    <input asp-for="DisplayName" class="form-control" />
+                                    <span asp-validation-for="DisplayName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Email" class="control-label">Email</label>
+                                    <input asp-for="Email" class="form-control" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="PhoneNumber" class="control-label">Phone Number</label>
+                                    <input asp-for="PhoneNumber" class="form-control" />
+                                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label class="control-label">User Roles</label>
+                            <div class="card bg-dark border-secondary">
+                                <div class="card-body">
+                                    @if (ViewBag.AllRoles != null)
+                                    {
+                                        @foreach (var role in ViewBag.AllRoles)
+                                        {
+                                            bool isChecked = ViewBag.Roles != null && ViewBag.Roles.Contains(role.Name);
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="selectedRoles" value="@role.Name" id="role_@role.Id" @(isChecked ? "checked" : "") />
+                                                <label style="color: white;" class="form-check-label" for="role_@role.Id">
+                                                    @role.Name
+                                                </label>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No roles available</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label class="control-label">Account Status</label>
+                            <div class="card bg-dark border-secondary">
+                                <div class="card-body">
+                                    @if (Model.LockoutEnd != null && Model.LockoutEnd > DateTime.Now)
+                                    {
+                                        if (Model.LockoutEnd > DateTime.Now.AddYears(10))
+                                        {
+                                            <div class="alert alert-danger">
+                                                This user is permanently banned.
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="alert alert-warning">
+                                                This user is suspended until @Model.LockoutEnd.Value.LocalDateTime.ToString("dd/MM/yyyy HH:mm").
+                                            </div>
+                                        }
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" name="removeRestrictions" value="true" id="removeRestrictions" />
+                                            <label style="color: white"  class="form-check-label" for="removeRestrictions">
+                                                Remove all restrictions and reactivate account
+                                            </label>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-success">
+                                            This user account is active.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label class="control-label">Email Verification</label>
+                            <div class="card bg-dark border-secondary">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" asp-for="EmailConfirmed" />
+                                        <label style="color: white" class="form-check-label" asp-for="EmailConfirmed">
+                                            Email is confirmed
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

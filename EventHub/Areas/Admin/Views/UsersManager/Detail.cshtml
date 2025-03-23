@@ -1,5 +1,177 @@
-﻿<div class="container-fluid bg-dark py-5">
-    <p class="h1">
-        User Detail
-    </p>
+﻿@model EventHub.Models.User
+
+<div class="container-fluid bg-dark py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="text-light">User Detail</h1>
+            </div>
+            <div class="col-md-4 text-end">
+                <a asp-action="Index" class="btn btn-outline-light">Back to List</a>
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit User</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card bg-dark text-light mb-4">
+                <div class="card-header">
+                    <h4>User Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-placeholder bg-secondary rounded-circle mx-auto mb-3" style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-person-fill" style="font-size: 60px;"></i>
+                        </div>
+                        <h3>@Model.DisplayName</h3>
+                        <p class="text-muted">@Model.UserName</p>
+                    </div>
+
+                    <ul class="list-group list-group-flush bg-dark">
+                        <li class="list-group-item bg-dark text-light border-secondary">
+                            <strong>Email:</strong> @Model.Email
+                        </li>
+                        <li class="list-group-item bg-dark text-light border-secondary">
+                            <strong>Phone:</strong> @(string.IsNullOrEmpty(Model.PhoneNumber) ? "Not provided" : Model.PhoneNumber)
+                        </li>
+                        <li class="list-group-item bg-dark text-light border-secondary">
+                            <strong>Created:</strong> @Model.Create_at.ToString("dd/MM/yyyy HH:mm")
+                        </li>
+                        <li class="list-group-item bg-dark text-light border-secondary">
+                            <strong>Status:</strong>
+                            @if (Model.LockoutEnd != null && Model.LockoutEnd > DateTime.Now)
+                            {
+                                if (Model.LockoutEnd > DateTime.Now.AddYears(10))
+                                {
+                                    <span class="badge bg-danger">Banned</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">Suspended until @Model.LockoutEnd.Value.LocalDateTime.ToString("dd/MM/yyyy")</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                        </li>
+                        <li class="list-group-item bg-dark text-light border-secondary">
+                            <strong>Email Confirmed:</strong> @(Model.EmailConfirmed ? "Yes" : "No")
+                        </li>
+                        <li class="list-group-item bg-dark text-light border-secondary">
+                            <strong>Two-Factor Enabled:</strong> @(Model.TwoFactorEnabled ? "Yes" : "No")
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h4>Roles</h4>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Roles != null && ViewBag.Roles.Count > 0)
+                    {
+                        <ul class="list-group list-group-flush bg-dark">
+                            @foreach (var role in ViewBag.Roles)
+                            {
+                                <li class="list-group-item bg-dark text-light border-secondary">@role</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No roles assigned</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card bg-dark text-light mb-4">
+                <div class="card-header">
+                    <h4>Tickets</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.Tickets != null && Model.Tickets.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Ticket Type</th>
+                                        <th>Details</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ticket in Model.Tickets)
+                                    {
+                                        <tr>
+                                            <td>@ticket.Id</td>
+                                            <td>@(ticket.TicketType?.Name)</td>
+                                            <td>@ticket.Detail</td>
+                                            <td>
+                                                <a href="#" class="btn btn-sm btn-outline-info">View</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No tickets found</p>
+                    }
+                </div>
+            </div>
+
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h4>Events</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.Events != null && Model.Events.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        <th>Date</th>
+                                        <th>Category</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var evt in Model.Events)
+                                    {
+                                        <tr>
+                                            <td>@evt.Id</td>
+                                            <td>@evt.Title</td>
+                                            <td>@evt.StartDate.ToString("dd/MM/yyyy") - @evt.EndDate.ToString("dd/MM/yyyy")</td>
+                                            <td>@evt.Category</td>
+                                            <td>
+                                                <a href="#" class="btn btn-sm btn-outline-info">View</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No events found</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

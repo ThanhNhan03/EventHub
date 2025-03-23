@@ -9,60 +9,142 @@ namespace EventHub.DataAccess.Repository
     public class UserRepository : IUserRepository
     {
         private readonly EventManagementSystemDbContext _eventManagementSystemDbContext;
+        private readonly UserManager<User> _userManager;
 
         public UserRepository(EventManagementSystemDbContext eventManagementSystemDbContext, UserManager<User> userManager)
         {
             _eventManagementSystemDbContext = eventManagementSystemDbContext;
+            _userManager = userManager;
         }
 
-        public Task<IdentityResult> ChangeDisplayNameAsync(int userId, string newDisplayName)
+        public async Task<IdentityResult> ChangeDisplayNameAsync(int userId, string newDisplayName)
         {
-            throw new NotImplementedException();
+            var user = await _eventManagementSystemDbContext.Users.FindAsync(userId.ToString());
+            if (user == null)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "User not found." });
+            }
+
+            user.DisplayName = newDisplayName;
+            _eventManagementSystemDbContext.Users.Update(user);
+            await _eventManagementSystemDbContext.SaveChangesAsync();
+            return IdentityResult.Success;
         }
 
-        public Task<IdentityResult> ChangeEmailAsync(int userId, string confirmPassword)
+        public async Task<IdentityResult> ChangeEmailAsync(int userId, string newEmail)
         {
-            throw new NotImplementedException();
+            var user = await _eventManagementSystemDbContext.Users.FindAsync(userId.ToString());
+            if (user == null)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "User not found." });
+            }
+
+            user.Email = newEmail;
+            user.NormalizedEmail = newEmail.ToUpper();
+            _eventManagementSystemDbContext.Users.Update(user);
+            await _eventManagementSystemDbContext.SaveChangesAsync();
+            return IdentityResult.Success;
         }
 
-        public Task<IdentityResult> ChangePasswordAsync(int userId, string newPassword)
+        public async Task<IdentityResult> ChangePasswordAsync(int userId, string newPassword)
         {
-            throw new NotImplementedException();
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "User not found." });
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            return await _userManager.ResetPasswordAsync(user, token, newPassword);
         }
 
-        public Task<IEnumerable<User>> GetAllAsync()
+        public async Task<IEnumerable<User>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _eventManagementSystemDbContext.Users.ToListAsync();
         }
 
-        public Task<IEnumerable<Event>> GetAllEventAsync(int userId, int ticketId, Period period = Period.Month)
+        public async Task<IEnumerable<Event>> GetAllEventAsync(int userId, int ticketId, Period period = Period.Month)
         {
-            throw new NotImplementedException();
+            var user = await _eventManagementSystemDbContext.Users
+                .Include(u => u.Tickets)
+                .ThenInclude(t => t.TicketType)
+                .ThenInclude(tt => tt.Event)
+                .FirstOrDefaultAsync(u => u.Id == userId.ToString());
+
+            if (user == null || user.Tickets == null)
+            {
+                return Enumerable.Empty<Event>();
+            }
+
+            var now = DateTime.Now;
+            var events = user.Tickets
+                .Where(t => ticketId == 0 || t.Id == ticketId)
+                .Select(t => t.TicketType?.Event)
+                .Where(e => e != null)
+                .Cast<Event>();
+
+            switch (period)
+            {
+                case Period.Day:
+                    return events.Where(e => e.StartDate.ToDateTime(TimeOnly.MinValue).Date == now.Date);
+                case Period.Month:
+                    return events.Where(e => e.StartDate.ToDateTime(TimeOnly.MinValue).Month == now.Month && 
+                                            e.StartDate.ToDateTime(TimeOnly.MinValue).Year == now.Year);
+                case Period.Year:
+                    return events.Where(e => e.StartDate.ToDateTime(TimeOnly.MinValue).Year == now.Year);
+                case Period.Future:
+                    return events.Where(e => e.StartDate.ToDateTime(TimeOnly.MinValue) > now);
+                case Period.Past:
+                    return events.Where(e => e.EndDate.ToDateTime(TimeOnly.MinValue) < now);
+                default:
+                    return events;
+            }
         }
 
-        public Task<IEnumerable<Ticket>> GetAllTicketAsync(int userId)
+        public async Task<IEnumerable<Ticket>> GetAllTicketAsync(int userId)
         {
-            throw new NotImplementedException();
+            var user = await _eventManagementSystemDbContext.Users
+                .Include(u => u.Tickets)
+                .ThenInclude(t => t.TicketType)
+                .FirstOrDefaultAsync(u => u.Id == userId.ToString());
+
+            return user?.Tickets ?? Enumerable.Empty<Ticket>();
         }
 
-        public Task<User?> GetByIdAsync(int userId)
+        public async Task<User?> GetByIdAsync(int userId)
         {
-            throw new NotImplementedException();
+            return await _eventManagementSystemDbContext.Users
+                .Include(u => u.Tickets)
+                .Include(u => u.Events)
+                .Include(u => u.UserAddress)
+                .FirstOrDefaultAsync(u => u.Id == userId.ToString());
         }
 
-        public Task<User?> GetByNameAsync(string name)
+        public async Task<User?> GetByNameAsync(string name)
         {
-            throw new NotImplementedException();
+            return await _eventManagementSystemDbContext.Users
+                .Include(u => u.Tickets)
+                .Include(u => u.Events)
+                .Include(u => u.UserAddress)
+                .FirstOrDefaultAsync(u => u.UserName == name || u.DisplayName == name);
         }
 
-        public Task<Event?> GetEventByTicketAsync(int userId, int ticketId)
+        public async Task<Event?> GetEventByTicketAsync(int userId, int ticketId)
         {
-            throw new NotImplementedException();
+            var ticket = await _eventManagementSystemDbContext.Tickets
+                .Include(t => t.TicketType)
+                .ThenInclude(tt => tt.Event)
+                .FirstOrDefaultAsync(t => t.Id == ticketId && t.UserId == userId.ToString());
+
+            return ticket?.TicketType?.Event;
         }
 
-        public Task<Ticket?> GetTicketByIdAsync(int userId, int ticketId)
+        public async Task<Ticket?> GetTicketByIdAsync(int userId, int ticketId)
         {
-            throw new NotImplementedException();
+            return await _eventManagementSystemDbContext.Tickets
+                .Include(t => t.TicketType)
+                .ThenInclude(tt => tt.Event)
+                .FirstOrDefaultAsync(t => t.Id == ticketId && t.UserId == userId.ToString());
         }
 
         public async Task<int> UpdateUserAsync(User user)

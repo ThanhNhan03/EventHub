@@ -32,6 +32,12 @@ builder.Services.AddDbContext<EventManagementSystemDbContext>(options =>
     options.EnableSensitiveDataLogging();
 });
 
+builder.Services.AddAuthentication().AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+});
+
 
 //Inject Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -42,8 +48,14 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequireLowercase = false;
     options.Password.RequiredUniqueChars = 0;
+    
+    // Add lockout options
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
 })
     .AddDefaultUI()
+    .AddDefaultTokenProviders()
     .AddEntityFrameworkStores<EventManagementSystemDbContext>();
 
 /* ====Provide ClaimsPrincipal and Handle concurrent connection to Database issues in Blazor==== */

@@ -1,3 +1,4 @@
+using EventHub.DataAccess.Repository;
 using EventHub.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -6,16 +7,17 @@ namespace EventHub.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly IEventRepository _eventRepository;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IEventRepository eventRepository)
         {
-            _logger = logger;
+            _eventRepository = eventRepository;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var upcomingEvents = await _eventRepository.GetUpcomingEventsAsync();
+            return View(upcomingEvents);
         }
 
         public IActionResult Privacy()

@@ -13,5 +13,6 @@ namespace EventHub.DataAccess.Repository
         Task<int> UpdateVisitorCountAsync(int eventId);
         IEnumerable<Event> SearchEventByType(string searchQuery, string? typeName, List<Event>? tempEvents);
         IEnumerable<Event> GetAllByType(string? typeName);
+        Task<IEnumerable<Event>> GetUpcomingEventsAsync(int count = 3);
     }
 }

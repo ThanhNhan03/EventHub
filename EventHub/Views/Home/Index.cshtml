@@ -1,4 +1,4 @@
-﻿<!-- Trang Home -->
+﻿@model IEnumerable<EventHub.Models.Event>
 @{
     ViewData["Title"] = "Home";
 }
@@ -47,58 +47,36 @@
     <div class="container">
         <h2 style="color: black" class="text-center mb-4 fw-bold">Upcoming Featured Events</h2>
         <div class="row">
-            <!-- This section could be populated dynamically from your database -->
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow hover-card">
-                    <div class="event-image-container">
-                        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" class="card-img-top" alt="Tech Conference">
-                        <div class="event-date">
-                            <span class="day">15</span>
-                            <span class="month">JUN</span>
+            @if (!Model.Any())
+            {
+                <div class="col-12 text-center">
+                    <p>No upcoming events at the moment.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var evt in Model)
+                {
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 shadow hover-card">
+                            <div class="event-image-container">
+                                <img src="@(string.IsNullOrEmpty(evt.Image) ? "/images/default-event.jpg" : evt.Image)" 
+                                     class="card-img-top" alt="@evt.Title">
+                                <div class="event-date">
+                                    <span class="day">@evt.StartDate.Day</span>
+                                    <span class="month">@evt.StartDate.ToString("MMM").ToUpper()</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">@evt.Title</h5>
+                                <p class="card-text"><i class="bi bi-calendar text-muted"></i> @evt.StartDate.ToString("dd/MM/yyyy")</p>
+                                <p class="card-text"><i class="bi bi-geo-alt text-muted"></i> @evt.VenueName, @evt.Country</p>
+                                <a href="/event/details/@evt.Id" class="btn btn-outline-primary">Learn More</a>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Tech Conference 2023</h5>
-                        <p class="card-text"><i class="bi bi-calendar text-muted"></i> June 15, 2023</p>
-                        <p class="card-text"><i class="bi bi-geo-alt text-muted"></i> San Francisco, CA</p>
-                        <a href="#" class="btn btn-outline-primary">Learn More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow hover-card">
-                    <div class="event-image-container">
-                        <img src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" class="card-img-top" alt="Music Festival">
-                        <div class="event-date">
-                            <span class="day">10</span>
-                            <span class="month">JUL</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Music Festival</h5>
-                        <p class="card-text"><i class="bi bi-calendar text-muted"></i> July 10, 2023</p>
-                        <p class="card-text"><i class="bi bi-geo-alt text-muted"></i> Austin, TX</p>
-                        <a href="#" class="btn btn-outline-primary">Learn More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow hover-card">
-                    <div class="event-image-container">
-                        <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" class="card-img-top" alt="Business Workshop">
-                        <div class="event-date">
-                            <span class="day">05</span>
-                            <span class="month">AUG</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Business Workshop</h5>
-                        <p class="card-text"><i class="bi bi-calendar text-muted"></i> August 5, 2023</p>
-                        <p class="card-text"><i class="bi bi-geo-alt text-muted"></i> New York, NY</p>
-                        <a href="#" class="btn btn-outline-primary">Learn More</a>
-                    </div>
-                </div>
-            </div>
+                }
+            }
         </div>
         <div class="text-center mt-4">
             <a href="/Events" class="btn btn-primary shadow">View All Events</a>

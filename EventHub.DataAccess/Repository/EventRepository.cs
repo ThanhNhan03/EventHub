@@ -143,5 +143,17 @@ namespace EventHub.DataAccess.Repository
                 .AsNoTracking();
             }
         }
+
+        public async Task<IEnumerable<Event>> GetUpcomingEventsAsync(int count = 3)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            return await _eventManagementSystemDbContext.Events
+                .AsNoTracking()
+                .Include(e => e.TicketTypes)
+                .Where(e => e.StartDate >= today)
+                .OrderBy(e => e.StartDate)
+                .Take(count)
+                .ToListAsync();
+        }
     }
 }

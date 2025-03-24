@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using EventHub.Utilities;
+using EventHub.Services;
 
 namespace EventHub.Areas.Admin.Controllers
 {
@@ -15,15 +16,51 @@ namespace EventHub.Areas.Admin.Controllers
         private readonly IUserRepository _userRepository;
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IEmailService _emailService;
+        private readonly ILogger<EmailService> _logger;
 
         public UsersManagerController(
             IUserRepository userRepository,
             UserManager<User> userManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            IEmailService emailService,
+            ILogger<EmailService> logger)
         {
             _userRepository = userRepository;
             _userManager = userManager;
             _roleManager = roleManager;
+            _emailService = emailService;
+            _logger = logger;
+        }
+
+        private async Task SendSuspensionEmail(User user, int durationDays, string reason, DateTime endDate)
+        {
+            string subject = "Your account has been suspended";
+            string message = $@"
+                <h2>Account Suspension Notice</h2>
+                <p>Dear {user.DisplayName},</p>
+                <p>Your account has been suspended for {durationDays} days until {endDate.ToLocalTime():dd/MM/yyyy}.</p>
+                <p><strong>Reason for suspension:</strong></p>
+                <p>{reason}</p>
+                <p>If you believe this is a mistake, please contact our support team.</p>
+                <p>Best regards,<br>EventHub Team</p>";
+
+            await _emailService.SendEmailAsync(user.Email, subject, message);
+        }
+
+        private async Task SendBanEmail(User user, string reason)
+        {
+            string subject = "Your account has been banned";
+            string message = $@"
+                <h2>Account Ban Notice</h2>
+                <p>Dear {user.DisplayName},</p>
+                <p>Your account has been permanently banned from our platform.</p>
+                <p><strong>Reason for ban:</strong></p>
+                <p>{reason}</p>
+                <p>If you believe this is a mistake, please contact our support team.</p>
+                <p>Best regards,<br>EventHub Team</p>";
+
+            await _emailService.SendEmailAsync(user.Email, subject, message);
         }
 
         public async Task<IActionResult> Index(string searchString, int page = 1, int pageSize = 10)
@@ -166,6 +203,17 @@ namespace EventHub.Areas.Admin.Controllers
             var lockoutEndDate = DateTime.UtcNow.AddDays(durationDays);
             await _userManager.SetLockoutEnabledAsync(user, true);
             await _userManager.SetLockoutEndDateAsync(user, lockoutEndDate);
+
+            // Send email notification
+            try
+            {
+                await SendSuspensionEmail(user, durationDays, reason, lockoutEndDate);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't stop the suspension process
+                _logger.LogError(ex, "Failed to send suspension email to {Email}", user.Email);
+            }
             
             TempData["Success"] = $"User {user.UserName} suspended until {lockoutEndDate.ToLocalTime()}";
             return RedirectToAction(nameof(Index));
@@ -189,6 +237,17 @@ namespace EventHub.Areas.Admin.Controllers
             // Permanently lock the account
             await _userManager.SetLockoutEnabledAsync(user, true);
             await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+
+            // Send email notification
+            try
+            {
+                await SendBanEmail(user, reason);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't stop the ban process
+                _logger.LogError(ex, "Failed to send ban email to {Email}", user.Email);
+            }
             
             TempData["Success"] = $"User {user.UserName} has been banned permanently";
             return RedirectToAction(nameof(Index));

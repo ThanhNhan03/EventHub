@@ -44,10 +44,10 @@
                                         var startDateTime = evt.StartDate.ToDateTime(TimeOnly.MinValue);
                                         var endDateTime = evt.EndDate.ToDateTime(TimeOnly.MinValue);
                                         var status = startDateTime > now ? "Upcoming" :
-                                                   endDateTime < now ? "Past" : "Ongoing";
+                                                endDateTime < now ? "Past" : "Ongoing";
                                     }
                                     <span class="badge bg-@(status == "Upcoming" ? "primary" : 
-                                                         status == "Past" ? "secondary" : "success")">
+                                                        status == "Past" ? "secondary" : "success")">
                                         @status
                                     </span>
                                 </td>
@@ -55,7 +55,7 @@
                                     @if (status == "Upcoming")
                                     {
                                         <form method="post" asp-page-handler="Unregister" asp-route-eventId="@evt.Id" 
-                                              onsubmit="return confirm('Are you sure you want to unregister from this event?');">
+                                            onsubmit="return confirm('Are you sure you want to unregister from this event?');">
                                             <button type="submit" class="btn btn-danger btn-sm">
                                                 Unregister
                                             </button>

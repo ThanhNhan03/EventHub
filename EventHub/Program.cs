@@ -64,6 +64,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
 
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddSingleton(sp =>
 {
     DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));

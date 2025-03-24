@@ -17,9 +17,9 @@ namespace EventHub.DataAccess.Repository
             _userManager = userManager;
         }
 
-        public async Task<IdentityResult> ChangeDisplayNameAsync(int userId, string newDisplayName)
+        public async Task<IdentityResult> ChangeDisplayNameAsync(string userId, string newDisplayName)
         {
-            var user = await _eventManagementSystemDbContext.Users.FindAsync(userId.ToString());
+            var user = await _eventManagementSystemDbContext.Users.FindAsync(userId);
             if (user == null)
             {
                 return IdentityResult.Failed(new IdentityError { Description = "User not found." });
@@ -31,9 +31,18 @@ namespace EventHub.DataAccess.Repository
             return IdentityResult.Success;
         }
 
-        public async Task<IdentityResult> ChangeEmailAsync(int userId, string newEmail)
+        public async Task<User?> GetByIdAsync(string userId)
         {
-            var user = await _eventManagementSystemDbContext.Users.FindAsync(userId.ToString());
+            return await _eventManagementSystemDbContext.Users
+                .Include(u => u.Tickets)
+                .Include(u => u.Events)
+                .Include(u => u.UserAddress)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+        }
+
+        public async Task<IdentityResult> ChangeEmailAsync(string userId, string newEmail)
+        {
+            var user = await _eventManagementSystemDbContext.Users.FindAsync(userId);
             if (user == null)
             {
                 return IdentityResult.Failed(new IdentityError { Description = "User not found." });
@@ -46,9 +55,9 @@ namespace EventHub.DataAccess.Repository
             return IdentityResult.Success;
         }
 
-        public async Task<IdentityResult> ChangePasswordAsync(int userId, string newPassword)
+        public async Task<IdentityResult> ChangePasswordAsync(string userId, string newPassword)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 return IdentityResult.Failed(new IdentityError { Description = "User not found." });
@@ -58,18 +67,13 @@ namespace EventHub.DataAccess.Repository
             return await _userManager.ResetPasswordAsync(user, token, newPassword);
         }
 
-        public async Task<IEnumerable<User>> GetAllAsync()
-        {
-            return await _eventManagementSystemDbContext.Users.ToListAsync();
-        }
-
-        public async Task<IEnumerable<Event>> GetAllEventAsync(int userId, int ticketId, Period period = Period.Month)
+        public async Task<IEnumerable<Event>> GetAllEventAsync(string userId, int ticketId, Period period = Period.Month)
         {
             var user = await _eventManagementSystemDbContext.Users
                 .Include(u => u.Tickets)
                 .ThenInclude(t => t.TicketType)
                 .ThenInclude(tt => tt.Event)
-                .FirstOrDefaultAsync(u => u.Id == userId.ToString());
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null || user.Tickets == null)
             {
@@ -101,23 +105,37 @@ namespace EventHub.DataAccess.Repository
             }
         }
 
-        public async Task<IEnumerable<Ticket>> GetAllTicketAsync(int userId)
+         public async Task<IEnumerable<User>> GetAllAsync()
+        {
+            return await _eventManagementSystemDbContext.Users.ToListAsync();
+        }
+
+        public async Task<IEnumerable<Ticket>> GetAllTicketAsync(string userId)
         {
             var user = await _eventManagementSystemDbContext.Users
                 .Include(u => u.Tickets)
                 .ThenInclude(t => t.TicketType)
-                .FirstOrDefaultAsync(u => u.Id == userId.ToString());
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             return user?.Tickets ?? Enumerable.Empty<Ticket>();
         }
 
-        public async Task<User?> GetByIdAsync(int userId)
+        public async Task<Event?> GetEventByTicketAsync(string userId, int ticketId)
         {
-            return await _eventManagementSystemDbContext.Users
-                .Include(u => u.Tickets)
-                .Include(u => u.Events)
-                .Include(u => u.UserAddress)
-                .FirstOrDefaultAsync(u => u.Id == userId.ToString());
+            var ticket = await _eventManagementSystemDbContext.Tickets
+                .Include(t => t.TicketType)
+                .ThenInclude(tt => tt.Event)
+                .FirstOrDefaultAsync(t => t.Id == ticketId && t.UserId == userId);
+
+            return ticket?.TicketType?.Event;
+        }
+
+        public async Task<Ticket?> GetTicketByIdAsync(string userId, int ticketId)
+        {
+            return await _eventManagementSystemDbContext.Tickets
+                .Include(t => t.TicketType)
+                .ThenInclude(tt => tt.Event)
+                .FirstOrDefaultAsync(t => t.Id == ticketId && t.UserId == userId);
         }
 
         public async Task<User?> GetByNameAsync(string name)
@@ -178,6 +196,21 @@ namespace EventHub.DataAccess.Repository
                 .Where(e => e != null)
                 .Cast<Event>()
                 .Distinct();
+        }
+
+        public async Task<IdentityResult> UnregisterEventAsync(string userId, int eventId)
+        {
+            var ticket = await _eventManagementSystemDbContext.Tickets
+                .FirstOrDefaultAsync(t => t.UserId == userId && t.TicketType.EventId == eventId);
+        
+            if (ticket == null)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "Ticket not found." });
+            }
+        
+            _eventManagementSystemDbContext.Tickets.Remove(ticket);
+            await _eventManagementSystemDbContext.SaveChangesAsync();
+            return IdentityResult.Success;
         }
     }
 }

@@ -6,6 +6,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using EventHub.DataAccess.Repository;
 using EventHub.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -17,13 +18,16 @@ namespace EventHub.Areas.Identity.Pages.Account.Manage
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly IUserRepository _userRepository;
 
         public IndexModel(
             UserManager<User> userManager,
-            SignInManager<User> signInManager)
+            SignInManager<User> signInManager,
+            IUserRepository userRepository)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _userRepository = userRepository;
         }
 
         /// <summary>
@@ -52,12 +56,17 @@ namespace EventHub.Areas.Identity.Pages.Account.Manage
         /// </summary>
         public class InputModel
         {
-            /// <summary>
+             /// <summary>
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
+            [Display(Name = "Display Name")]
+            [StringLength(12, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 4)]
+            public string DisplayName { get; set; }
+
             [Phone]
             [Display(Name = "Phone number")]
+            [RegularExpression(@"^(0|84)(3|5|7|8|9)[0-9]{8}$", ErrorMessage = "Please enter a valid Vietnamese phone number (e.g. 0912345678 or 84912345678)")]
             public string PhoneNumber { get; set; }
         }
 
@@ -70,7 +79,8 @@ namespace EventHub.Areas.Identity.Pages.Account.Manage
 
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber
+                PhoneNumber = phoneNumber,
+                DisplayName = user.DisplayName
             };
         }
 
@@ -107,6 +117,16 @@ namespace EventHub.Areas.Identity.Pages.Account.Manage
                 if (!setPhoneResult.Succeeded)
                 {
                     StatusMessage = "Unexpected error when trying to set phone number.";
+                    return RedirectToPage();
+                }
+            }
+
+            if (Input.DisplayName != user.DisplayName)
+            {
+                var result = await _userRepository.ChangeDisplayNameAsync(user.Id, Input.DisplayName);
+                if (!result.Succeeded)
+                {
+                    StatusMessage = "Unexpected error when trying to update display name.";
                     return RedirectToPage();
                 }
             }

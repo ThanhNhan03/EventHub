@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using EventHub.App;
+using EventHub.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +87,9 @@ builder.Services.AddSingleton(sp =>
     return cloudinary;
 });
 
+builder.Services.AddSignalR();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -135,5 +139,7 @@ using (var scope = app.Services.CreateScope())
     await roleInitializer.InitializeRolesAsync();
     await DbInitializer.SeedAsync(context, userManager);
 }
+app.MapHub<ChatHub>("/chatHub");
+
 
     app.Run();

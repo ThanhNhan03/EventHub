@@ -55,6 +55,13 @@
     <script src="_framework/blazor.web.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Add before closing body tag -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <partial name="_ChatWidget" />
+    }
 </body>
 
 </html>

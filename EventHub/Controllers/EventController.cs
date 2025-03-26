@@ -16,16 +16,23 @@ public class EventController : Controller
     private readonly ITicketTypeRepository _ticketTypeRepository;
     private readonly IEventService _eventService;
     private readonly UserManager<User> _userManager;
+    private readonly IStripeService _stripeService;
     private IEnumerable<Event> events;
 
-    public EventController(IEventRepository eventRepository, UserManager<User> userManager, IUserRepository userRepository, ITicketTypeRepository ticketTypeRepository, IEventService eventService)
+    public EventController(
+        IEventRepository eventRepository, 
+        UserManager<User> userManager, 
+        IUserRepository userRepository, 
+        ITicketTypeRepository ticketTypeRepository, 
+        IEventService eventService,
+        IStripeService stripeService)
     {
         _eventRepository = eventRepository;
         _userManager = userManager;
         _userRepository = userRepository;
         _ticketTypeRepository = ticketTypeRepository;
         _eventService = eventService;
-
+        _stripeService = stripeService;
         events = _eventService.Events;
     }
 
@@ -91,44 +98,46 @@ public class EventController : Controller
         {
             var user = await _userManager.GetUserAsync(User);
             var existingTicketType = await _ticketTypeRepository.GetTicketTypeByIdAsync(ticketType.Id);
-
+    
             if (user is null || existingTicketType is null || existingTicketType.Event is null)
             {
                 return Redirect("/Identity/Account/Login");
             }
-
+    
             if (existingTicketType.TotalTicketsSold < existingTicketType.MaxCapital)
             {
-                existingTicketType.TotalTicketsSold++;
-                var ticket = new Ticket()
+                // Create Stripe checkout session
+                var successUrl = Url.Action("PaymentSuccess", "Event", new { ticketTypeId = existingTicketType.Id }, Request.Scheme);
+                var cancelUrl = Url.Action("PaymentCancel", "Event", new { ticketTypeId = existingTicketType.Id }, Request.Scheme);
+    
+                var session = await _stripeService.CreateCheckoutSessionAsync(
+                    (decimal)existingTicketType.Price,
+                    existingTicketType.Event.Title,
+                    existingTicketType.Name,
+                    successUrl!,
+                    cancelUrl!
+                );
+    
+                // Store ticket information in TempData for later use
+                var ticketInfo = new
                 {
-                    Detail = $"Ticket No.{existingTicketType.TotalTicketsSold}, name: {existingTicketType.Detail} At {existingTicketType.Event.VenueName}, {existingTicketType.Event.Country} - {existingTicketType.Event.Address} in {existingTicketType.Event.StartDate}.",
                     TicketTypeId = existingTicketType.Id,
                     UserId = user.Id,
-                    User = user
+                    SessionId = session.Id
                 };
-
-                user.Tickets ??= [];
-                user.Tickets.Add(ticket);
-                await _userRepository.UpdateUserAsync(user);
-                await _ticketTypeRepository.UpdateTicketTypeAsync(existingTicketType);
-
-                var tickketJson = JsonConvert.SerializeObject(ticket, new JsonSerializerSettings
-                {
-                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-                });
-                TempData["TicketSuccess"] = tickketJson;
-
-                return RedirectToAction(nameof(SuccessfulRegister));
+                TempData["PendingTicket"] = JsonConvert.SerializeObject(ticketInfo);
+    
+                // Redirect to Stripe Checkout
+                return Redirect(session.Url);
             }
         }
-
+    
         var backUrl = TempData["Referer"]?.ToString();
         if (!string.IsNullOrEmpty(backUrl))
         {
             return Redirect(backUrl);
         }
-
+    
         return RedirectToAction(nameof(Index));
     }
 
@@ -142,6 +151,54 @@ public class EventController : Controller
             return View(ticket);
         }
 
+        return RedirectToAction(nameof(Index));
+    }
+
+    [Route("PaymentSuccess")]
+    public async Task<IActionResult> PaymentSuccess(int ticketTypeId)
+    {
+        var ticketInfoJson = TempData["PendingTicket"] as string;
+        if (string.IsNullOrEmpty(ticketInfoJson))
+        {
+            return RedirectToAction(nameof(Index));
+        }
+    
+        var ticketInfo = JsonConvert.DeserializeObject<dynamic>(ticketInfoJson);
+        var user = await _userManager.GetUserAsync(User);
+        var existingTicketType = await _ticketTypeRepository.GetTicketTypeByIdAsync(ticketTypeId);
+    
+        if (user is null || existingTicketType is null || existingTicketType.Event is null)
+        {
+            return RedirectToAction(nameof(Index));
+        }
+    
+        existingTicketType.TotalTicketsSold++;
+        var ticket = new Ticket()
+        {
+            Detail = $"Ticket No.{existingTicketType.TotalTicketsSold}, name: {existingTicketType.Detail} At {existingTicketType.Event.VenueName}, {existingTicketType.Event.Country} - {existingTicketType.Event.Address} in {existingTicketType.Event.StartDate}.",
+            TicketTypeId = existingTicketType.Id,
+            UserId = user.Id,
+            User = user
+        };
+    
+        user.Tickets ??= [];
+        user.Tickets.Add(ticket);
+        await _userRepository.UpdateUserAsync(user);
+        await _ticketTypeRepository.UpdateTicketTypeAsync(existingTicketType);
+    
+        var ticketJson = JsonConvert.SerializeObject(ticket, new JsonSerializerSettings
+        {
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+        });
+        TempData["TicketSuccess"] = ticketJson;
+    
+        return RedirectToAction(nameof(SuccessfulRegister));
+    }
+
+    [Route("PaymentCancel")]
+    public IActionResult PaymentCancel()
+    {
+        TempData["Error"] = "Payment was cancelled.";
         return RedirectToAction(nameof(Index));
     }
 }

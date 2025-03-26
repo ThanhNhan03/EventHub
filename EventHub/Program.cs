@@ -78,6 +78,7 @@ builder.Services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
 
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IStripeService, StripeService>();
 
 builder.Services.AddSingleton(sp =>
 {

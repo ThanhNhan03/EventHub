@@ -19,8 +19,9 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.6" />
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.2" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0"/>
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Stripe.net" Version="47.4.0" />
 	</ItemGroup>
 
 	<ItemGroup>

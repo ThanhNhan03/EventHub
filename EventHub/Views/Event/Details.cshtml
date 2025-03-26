@@ -68,19 +68,20 @@
             </div>
 
             <div class="bg-warning-subtle text-black p-3 rounded-3">
-                <form asp-action="ConfirmTicket" method="get">
+                <form asp-action="ConfirmTicket" method="post">
                     <div class="form-group">
                         <label for="selectticketTypeId" class="control-label">Select Ticket</label>
-                        <select name="ticketTypeId" class="form-select" id="selectticketTypeId">
+                        <select name="Id" class="form-select" id="selectticketTypeId">
                             @foreach (var ticketType in Model.TicketTypes)
                             {
-                                <option value="@ticketType.Id">
-                                    @ticketType.Name - @(ticketType.Price.ToString("C")) @(ticketType.MaxCapital <= ticketType.TotalTicketsSold ? "(SOLD OUT)" : "")
+                                var isDisabled = ticketType.MaxCapital <= ticketType.TotalTicketsSold;
+                                <option value="@ticketType.Id" disabled="@isDisabled">
+                                    @ticketType.Name - @(ticketType.Price.ToString("C")) @(isDisabled ? "(SOLD OUT)" : "")
                                 </option>
                             }
                         </select>
                     </div>
-                    <button class="btn btn-danger mt-3">Register</button>
+                    <button type="submit" class="btn btn-danger mt-3">Purchase Ticket</button>
                 </form>
             </div>
         </div>

@@ -282,21 +282,27 @@ namespace EventManagementSystem.Areas.Admin.Controllers
             {
                 try
                 {
+                    var eventToDelete = await _eventRepository.GetByIdAsync(id.Value);
+                    if (eventToDelete == null)
+                    {
+                        TempData["Error"] = "Event not found or already deleted.";
+                        return RedirectToAction(nameof(Index));
+                    }
+
                     await _adminEventRepository.DeleteAsync(id.Value);
                     _eventService.SetEvents();
-                    TempData["Success"] = "Deleted event successfuly. 🤩";
+                    
+                    TempData["Success"] = $"Event '{eventToDelete.Title}' was deleted successfully. 🤩";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
                 {
-                    TempData["Error"] = $"Delete event data failed, {ex.Message} 🤬";
+                    TempData["Error"] = $"Failed to delete event: {ex.Message} 🤬";
+                    return RedirectToAction(nameof(Delete), new { id });
                 }
             }
 
-            var backUrl = TempData["Referer"] as string;
-            if (!string.IsNullOrEmpty(backUrl))
-            {
-                return Redirect(backUrl);
-            }
+            TempData["Error"] = "Invalid event ID.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -307,6 +313,10 @@ namespace EventManagementSystem.Areas.Admin.Controllers
             {
                 try
                 {
+                    // Get the event ID before deleting ticket types
+                    var ticketType = await _eventRepository.GetByIdAsync(ticketTypeIds.First());
+                    var eventId = ticketType?.Id;
+
                     if (ticketTypeIds.Count() == 1)
                     {
                         await _adminTicketTypeRepository.DeleteAsync(ticketTypeIds.First());
@@ -315,10 +325,15 @@ namespace EventManagementSystem.Areas.Admin.Controllers
                     {
                         await _adminTicketTypeRepository.DeleteAllAsync(ticketTypeIds);
                     }
-                    TempData["Success"] = $"Deleted ticket type id:{string.Join(", ", ticketTypeIds)} successfuly. 😎";
+                    
+                    TempData["Success"] = $"Deleted ticket type id:{string.Join(", ", ticketTypeIds)} successfully. 😎";
                     _eventService.SetEvents();
-                    return RedirectToAction(nameof(Index));
 
+                    // Redirect back to Delete view if we have the event ID
+                    if (eventId.HasValue)
+                    {
+                        return RedirectToAction(nameof(Delete), new { id = eventId.Value });
+                    }
                 }
                 catch (Exception ex)
                 {

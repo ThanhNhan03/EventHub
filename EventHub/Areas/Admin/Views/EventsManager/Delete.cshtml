@@ -158,11 +158,49 @@
                 </div>
             </div>
         </div>
-        <form asp-controller="EventsManager" asp-action="Delete" method="post">
+        <form asp-controller="EventsManager" asp-action="Delete" method="post" 
+              onsubmit="return confirmDelete(event)">
             <input type="hidden" asp-for="Id" />
             <div class="mt-4 text-end">
+                <a asp-action="Index" class="btn btn-secondary me-2">Cancel</a>
                 <button type="submit" class="btn btn-danger">Delete Event</button>
             </div>
         </form>
     </fieldset>
 </div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(event) {
+            if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+                event.preventDefault();
+                return false;
+            }
+            
+            // Disable submit button to prevent double submission
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+            }
+            return true;
+        }
+
+        // Handle delete ticket type forms
+        document.querySelectorAll('form[action*="DeleteTicketType"]').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (!confirm('Are you sure you want to delete this ticket type?')) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+                }
+                return true;
+            });
+        });
+    </script>
+}

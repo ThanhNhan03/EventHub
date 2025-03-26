@@ -21,14 +21,14 @@ namespace EventHub.DataAccess.Repository.Admin
 
         public async Task<int> DeleteAsync(int eventId)
         {
-            var eventToDelete = await _eventManagementSystemDbContext.Events.FindAsync(eventId);
+            // Load event và ticket types trong một lần query
+            var eventToDelete = await _eventManagementSystemDbContext.Events
+                .Include(e => e.TicketTypes)
+                .FirstOrDefaultAsync(e => e.Id == eventId);
 
             if (eventToDelete is not null)
             {
-                var ticketTypeInEvent = await _eventManagementSystemDbContext.TicketTypes
-                    .AnyAsync(tt => tt.EventId == eventToDelete.Id);
-
-                if (ticketTypeInEvent)
+                if (eventToDelete.TicketTypes?.Any() == true)
                 {
                     throw new Exception("Ticket type is exist, Delete Ticket type before deleting the Event.");
                 }
@@ -36,10 +36,8 @@ namespace EventHub.DataAccess.Repository.Admin
                 _eventManagementSystemDbContext.Events.Remove(eventToDelete);
                 return await _eventManagementSystemDbContext.SaveChangesAsync();
             }
-            else
-            {
-                throw new ArgumentException("Event id to deleted not found.");
-            }
+            
+            throw new ArgumentException("Event id to deleted not found.");
         }
 
         public async Task<int> EditAsync(Event editEvent)
@@ -109,19 +107,29 @@ namespace EventHub.DataAccess.Repository.Admin
         {
             var lowerSearchQuery = searchQuery.ToLower();
             return _eventManagementSystemDbContext.Events
-                .ToList()
                 .Where(e => e.Title.ToLower().Contains(lowerSearchQuery) ||
                     e.ShortDescription.ToLower().Contains(lowerSearchQuery) ||
                     e.Description.ToLower().Contains(lowerSearchQuery) ||
-                    e.Category.ToString().ToLower().Contains(lowerSearchQuery) ||
                     e.Country.ToLower().Contains(lowerSearchQuery) ||
-                    e.Address.ToLower().Contains(lowerSearchQuery))
-                .ToList().Count;
+                    e.Address.ToLower().Contains(lowerSearchQuery) ||
+                    ((int)e.Category).ToString() == lowerSearchQuery)
+                .Count();
         }
 
         public async Task<IEnumerable<Event>> GetEventsSortedPagedAsync(string sortBy, int? pageNumber, int maxItem, string? searchQuery)
         {
-            var events = from e in _eventManagementSystemDbContext.Events select e;
+            IQueryable<Event> events = _eventManagementSystemDbContext.Events;
+
+            if (!string.IsNullOrEmpty(searchQuery))
+            {
+                var lowerSearchQuery = searchQuery.ToLower();
+                events = events.Where(e => e.Title.ToLower().Contains(lowerSearchQuery) ||
+                    e.ShortDescription.ToLower().Contains(lowerSearchQuery) ||
+                    e.Description.ToLower().Contains(lowerSearchQuery) ||
+                    e.Country.ToLower().Contains(lowerSearchQuery) ||
+                    e.Address.ToLower().Contains(lowerSearchQuery) ||
+                    ((int)e.Category).ToString() == lowerSearchQuery);
+            }
 
             events = sortBy switch
             {
@@ -138,27 +146,11 @@ namespace EventHub.DataAccess.Repository.Admin
             };
 
             pageNumber ??= 1;
-
-            if (!string.IsNullOrEmpty(searchQuery))
-            {
-                var eventsList = await events.AsNoTracking().ToListAsync();
-                var lowerSearchQuery = searchQuery.ToLower();
-
-                eventsList = eventsList.Where(e => e.Title.ToLower().Contains(lowerSearchQuery) ||
-                    e.ShortDescription.ToLower().Contains(lowerSearchQuery) ||
-                    e.Description.ToLower().Contains(lowerSearchQuery) ||
-                    e.Category.ToString().ToLower().Contains(lowerSearchQuery) ||
-                    e.Country.ToLower().Contains(lowerSearchQuery) ||
-                    e.Address.ToLower().Contains(lowerSearchQuery))
-                    .ToList();
-
-                return eventsList.Skip((pageNumber.Value - 1) * maxItem).Take(maxItem).ToList();
-            }
-            else
-            {
-                events = events.Skip((pageNumber.Value - 1) * maxItem).Take(maxItem);
-                return await events.AsNoTracking().ToListAsync();
-            }
+            return await events
+                .Skip((pageNumber.Value - 1) * maxItem)
+                .Take(maxItem)
+                .AsNoTracking()
+                .ToListAsync();
         }
     }
 }

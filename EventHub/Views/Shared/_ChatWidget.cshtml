@@ -95,10 +95,11 @@
 </style>
 
 <script>
-    let connection = new signalR.HubConnectionBuilder()
+    @* let connection = new signalR.HubConnectionBuilder()
         .withUrl("/chatHub")
-        .build();
+        .build(); *@
 
+    // Use the existing connection from _Layout.cshtml
     let currentUser = "@currentUser?.UserName";
     let isAdmin = @Json.Serialize(User.IsInRole("Admin"));
 
@@ -121,8 +122,23 @@
         }
     });
 
-    connection.start().catch(function (err) {
-        return console.error(err.toString());
+    connection.on("ReceivePrivateMessage", function (fromUser, message) {
+        let messageDiv = document.createElement("div");
+        messageDiv.className = 'message message-received';
+        messageDiv.textContent = message;
+
+        let infoDiv = document.createElement("div");
+        infoDiv.className = "message-info";
+        infoDiv.textContent = `Private from ${fromUser}`;
+
+        let messagesList = document.getElementById("messagesList");
+        messagesList.appendChild(messageDiv);
+        messagesList.appendChild(infoDiv);
+        messagesList.scrollTop = messagesList.scrollHeight;
+
+        if (document.getElementById("chat-body").style.display === "none") {
+            incrementUnreadBadge();
+        }
     });
 
     if (isAdmin) {

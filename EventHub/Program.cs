@@ -141,9 +141,7 @@ using (var scope = app.Services.CreateScope())
     await roleInitializer.InitializeRolesAsync();
     await DbInitializer.SeedAsync(context, userManager);
 }
-app.MapHub<ChatHub>("/chatHub");
-
-app.MapHub<ActiveUsersHub>("/activeUsersHub");
+app.MapHub<EventHubCommunicationHub>("/eventHubCommunication");
 
 
     app.Run();

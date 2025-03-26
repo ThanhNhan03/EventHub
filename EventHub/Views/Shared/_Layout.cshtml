@@ -65,7 +65,7 @@
         {
             <text>
             const connection = new signalR.HubConnectionBuilder()
-                .withUrl("/activeUsersHub")
+                .withUrl("/eventHubCommunication")
                 .withAutomaticReconnect()
                 .build();
 
@@ -77,6 +77,11 @@
                 if (activeUsersElement) {
                     activeUsersElement.textContent = count;
                 }
+            });
+
+            // Request initial active users count
+            connection.onreconnected(() => {
+                connection.invoke("GetActiveUsers");
             });
             </text>
         }

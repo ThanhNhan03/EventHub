@@ -212,5 +212,15 @@ namespace EventHub.DataAccess.Repository
             await _eventManagementSystemDbContext.SaveChangesAsync();
             return IdentityResult.Success;
         }
+
+        public async Task<int> GetNewUsersInWeekAsync()
+        {
+            var startOfWeek = DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek);
+            var endOfWeek = startOfWeek.AddDays(7);
+
+            return await _eventManagementSystemDbContext.Users
+                .Where(u => u.Create_at >= startOfWeek && u.Create_at < endOfWeek)
+                .CountAsync();
+        }
     }
 }

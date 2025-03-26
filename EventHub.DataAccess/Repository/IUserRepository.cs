@@ -18,5 +18,6 @@ namespace EventHub.DataAccess.Repository
         public Task<IdentityResult> ChangePasswordAsync(string userId, string newPassword);
         public Task<IEnumerable<Event>> GetRegisteredEventsAsync(string userId);
         public Task<IdentityResult> UnregisterEventAsync(string userId, int eventId);
+        public Task<int> GetNewUsersInWeekAsync();
     }
 }

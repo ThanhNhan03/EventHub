@@ -88,6 +88,7 @@ builder.Services.AddSingleton(sp =>
     return cloudinary;
 });
 
+// Add SignalR service
 builder.Services.AddSignalR();
 
 
@@ -141,6 +142,8 @@ using (var scope = app.Services.CreateScope())
     await DbInitializer.SeedAsync(context, userManager);
 }
 app.MapHub<ChatHub>("/chatHub");
+
+app.MapHub<ActiveUsersHub>("/activeUsersHub");
 
 
     app.Run();

@@ -55,4 +55,24 @@ public class TicketTypeRepository : ITicketTypeRepository
             .Include(tt => tt.Event)
             .FirstOrDefaultAsync(tt => tt.Id == ticketTypeId);
     }
+
+    public async Task<decimal> GetTotalRevenueAsync()
+    {
+        var ticketTypes = await _eventManagementSystemDbContext.TicketTypes
+            .AsNoTracking()
+            .Include(tt => tt.Tickets)
+            .ToListAsync();
+    
+        decimal totalRevenue = 0;
+        
+        foreach (var ticketType in ticketTypes)
+        {
+            if (ticketType.Tickets != null)
+            {
+                totalRevenue += (decimal)ticketType.Price * ticketType.Tickets.Count;
+            }
+        }
+        
+        return totalRevenue;
+    }
 }

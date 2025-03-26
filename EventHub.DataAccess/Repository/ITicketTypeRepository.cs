@@ -12,5 +12,6 @@ namespace EventHub.DataAccess.Repository
         Task<int> UpdateTicketTypeAsync(TicketType ticketType);
         Task<IEnumerable<Ticket>> GetTicketsByTickeyTypeIdAsync(int ticketTypeId);
         Task<TicketType?> GetTicketTypeByIdAsync(int ticketTypeId);
+        Task<decimal> GetTotalRevenueAsync();
     }
 }

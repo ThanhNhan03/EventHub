@@ -7,7 +7,7 @@ using System.Data;
 using EventHub.Utilities;
 using EventHub.Services;
 
-namespace EventHub.Areas.Admin.Controllers
+namespace EventManagementSystem.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin")]

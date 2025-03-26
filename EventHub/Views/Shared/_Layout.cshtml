@@ -58,10 +58,33 @@
 
     <!-- Add before closing body tag -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+    <script>
+        // Only initialize if user is authenticated
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/activeUsersHub")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.start()
+                .catch(err => console.error(err.toString()));
+
+            connection.on("UpdateActiveUsers", (count) => {
+                const activeUsersElement = document.getElementById("activeUsersCount");
+                if (activeUsersElement) {
+                    activeUsersElement.textContent = count;
+                }
+            });
+            </text>
+        }
+    </script>
+
     @if (User.Identity.IsAuthenticated)
     {
         <partial name="_ChatWidget" />
     }
-</body>
-
+    </body>
 </html>

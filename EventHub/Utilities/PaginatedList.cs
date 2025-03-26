@@ -3,6 +3,7 @@
     public class PaginatedList<T> : List<T>
     {
         public int PageIndex { get; private set; }
+        public int PageSize { get; private set; }
         public int TotalNumberOfPages { get; private set; }
         public bool HasPreviousPage => PageIndex > 1;
         public bool HasNextPage => PageIndex < TotalNumberOfPages;
@@ -13,6 +14,7 @@
         {
             AllItemsCount = allItemsCount;
             PageIndex = pageIndex;
+            PageSize = pageSize;
             TotalNumberOfPages = (int)Math.Ceiling((double)allItemsCount / pageSize);
             AddRange(items);
         }

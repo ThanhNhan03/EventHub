@@ -11,6 +11,12 @@
         <div class="col-md-6">
             <form class="container-fluid" asp-action="Index" method="get">
                 <div class="input-group">
+                    <select name="pageSize" class="form-select" style="width: auto;" onchange="this.form.submit()">
+                        @foreach (var size in (int[])ViewData["PageSizes"])
+                        {
+                            <option value="@size" selected="@(ViewData["CurrentPageSize"].ToString() == size.ToString())">@size items</option>
+                        }
+                    </select>
                     <input asp-for="SearchQuery" type="text" class="form-control border-0" placeholder="Search event: eg. title, detail, category, city" aria-label="Search" aria-describedby="navbar-search" style="outline:none; box-shadow:none;">
                     <button type="submit" class="btn btn-warning" style="outline:none; box-shadow:none;">Search</button>
                 </div>
@@ -67,25 +73,32 @@
                 }
             </tbody>
         </table>
-        <div>
-            @{
-                var prevDisabled = Model.HasPreviousPage ? "" : "disabled";
-                var nextDisabled = Model.HasNextPage ? "" : "disabled";
-            }
-            <a asp-action="Index"
-               asp-route-sortBy="@ViewData["CurrentSort"]"
-               asp-route-searchQuery="@ViewData["CurrentSearch"]"
-               asp-route-pageNumber="@(Model.PageIndex - 1)"
-               class="btn btn-link @prevDisabled" style="outline:none; box-shadow:none;">
-                Previous
-            </a>
-            <a asp-action="Index"
-               asp-route-sortBy="@ViewData["CurrentSort"]"
-               asp-route-searchQuery="@ViewData["CurrentSearch"]"
-               asp-route-pageNumber="@(Model.PageIndex + 1)"
-               class="btn btn-link @nextDisabled" style="outline:none; box-shadow:none;">
-                Next
-            </a>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-light">Showing @((Model.PageIndex - 1) * Model.PageSize + 1) to @(Math.Min(Model.PageIndex * Model.PageSize, Model.AllItemsCount)) of @Model.AllItemsCount entries</span>
+            </div>
+            <div>
+                @{
+                    var prevDisabled = Model.HasPreviousPage ? "" : "disabled";
+                    var nextDisabled = Model.HasNextPage ? "" : "disabled";
+                }
+                <a asp-action="Index"
+                   asp-route-sortBy="@ViewData["CurrentSort"]"
+                   asp-route-searchQuery="@ViewData["CurrentSearch"]"
+                   asp-route-pageNumber="@(Model.PageIndex - 1)"
+                   asp-route-pageSize="@ViewData["CurrentPageSize"]"
+                   class="btn btn-link @prevDisabled" style="outline:none; box-shadow:none;">
+                    Previous
+                </a>
+                <a asp-action="Index"
+                   asp-route-sortBy="@ViewData["CurrentSort"]"
+                   asp-route-searchQuery="@ViewData["CurrentSearch"]"
+                   asp-route-pageNumber="@(Model.PageIndex + 1)"
+                   asp-route-pageSize="@ViewData["CurrentPageSize"]"
+                   class="btn btn-link @nextDisabled" style="outline:none; box-shadow:none;">
+                    Next
+                </a>
+            </div>
         </div>
     </div>
 </div>

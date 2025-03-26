@@ -40,8 +40,10 @@ namespace EventManagementSystem.Areas.Admin.Controllers
             TempData["Referer"] = context.HttpContext.Request.Headers.Referer.ToString();
         }
 
-        private int maxItem = 20;
-        public async Task<IActionResult> Index(string sortBy, int? pageNumber, string? searchQuery)
+        private readonly int[] pageSizes = new[] { 5, 10, 20, 50 };
+        private int maxItem = 10; // Default page size
+
+        public async Task<IActionResult> Index(string sortBy, int? pageNumber, string? searchQuery, int? pageSize)
         {
             ViewData["CurrentSort"] = sortBy;
             ViewData["IdSortParam"] = string.IsNullOrEmpty(sortBy) || sortBy == "id_desc" ? "id" : "id_desc";
@@ -50,6 +52,13 @@ namespace EventManagementSystem.Areas.Admin.Controllers
             ViewData["CountrySortParam"] = sortBy == "country" ? "country_desc" : "country";
             ViewData["DateSortParam"] = sortBy == "date" ? "date_desc" : "date";
             ViewData["CurrentSearch"] = searchQuery;
+            ViewData["PageSizes"] = pageSizes;
+            
+            if (pageSize.HasValue)
+            {
+                maxItem = pageSize.Value;
+            }
+            ViewData["CurrentPageSize"] = maxItem;
 
             pageNumber ??= 1;
 

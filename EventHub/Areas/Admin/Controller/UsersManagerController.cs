@@ -66,12 +66,12 @@ namespace EventManagementSystem.Areas.Admin.Controllers
         public async Task<IActionResult> Index(string searchString, int page = 1, int pageSize = 10)
         {
             var users = await _userRepository.GetAllAsync();
-            
+
             // Apply search filter if provided
             if (!string.IsNullOrEmpty(searchString))
             {
-                users = users.Where(u => 
-                    u.UserName.Contains(searchString, StringComparison.OrdinalIgnoreCase) || 
+                users = users.Where(u =>
+                    u.UserName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
                     u.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
                     u.DisplayName.Contains(searchString, StringComparison.OrdinalIgnoreCase));
             }
@@ -83,9 +83,11 @@ namespace EventManagementSystem.Areas.Admin.Controllers
                 page,
                 pageSize
             );
-            
+
             paginatedUsers.SearchQuery = searchString;
-            
+            ViewBag.CurrentPageSize = pageSize;
+            ViewBag.SearchString = searchString;
+
             return View(paginatedUsers);
         }
 
@@ -151,7 +153,7 @@ namespace EventManagementSystem.Areas.Admin.Controllers
                 {
                     // Update roles
                     var userRoles = await _userManager.GetRolesAsync(existingUser);
-                    
+
                     // Remove roles not in the selection
                     foreach (var role in userRoles)
                     {
@@ -160,7 +162,7 @@ namespace EventManagementSystem.Areas.Admin.Controllers
                             await _userManager.RemoveFromRoleAsync(existingUser, role);
                         }
                     }
-                    
+
                     // Add new roles
                     foreach (var role in selectedRoles)
                     {
@@ -173,13 +175,13 @@ namespace EventManagementSystem.Areas.Admin.Controllers
                     TempData["Success"] = "User updated successfully";
                     return RedirectToAction(nameof(Index));
                 }
-                
+
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError("", error.Description);
                 }
             }
-            
+
             ViewBag.AllRoles = _roleManager.Roles.ToList();
             return View(user);
         }
@@ -214,7 +216,7 @@ namespace EventManagementSystem.Areas.Admin.Controllers
                 // Log the error but don't stop the suspension process
                 _logger.LogError(ex, "Failed to send suspension email to {Email}", user.Email);
             }
-            
+
             TempData["Success"] = $"User {user.UserName} suspended until {lockoutEndDate.ToLocalTime()}";
             return RedirectToAction(nameof(Index));
         }
@@ -248,11 +250,11 @@ namespace EventManagementSystem.Areas.Admin.Controllers
                 // Log the error but don't stop the ban process
                 _logger.LogError(ex, "Failed to send ban email to {Email}", user.Email);
             }
-            
+
             TempData["Success"] = $"User {user.UserName} has been banned permanently";
             return RedirectToAction(nameof(Index));
         }
-        
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Unban(string id)
@@ -272,9 +274,88 @@ namespace EventManagementSystem.Areas.Admin.Controllers
             await _userManager.SetLockoutEndDateAsync(user, null);
             await _userManager.SetLockoutEnabledAsync(user, false);
             await _userManager.ResetAccessFailedCountAsync(user);
-            
+
             TempData["Success"] = $"User {user.UserName} has been unbanned";
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task SendAccountCreationEmail(User user, string password)
+        {
+            string subject = "Your EventHub Account Has Been Created";
+            string message = $@"
+                <h2>Welcome to EventHub!</h2>
+                <p>Dear {user.DisplayName},</p>
+                <p>An account has been created for you on the EventHub platform.</p>
+                <p><strong>Your login details:</strong></p>
+                <p>Username: {user.UserName}</p>
+                <p>Email: {user.Email}</p>
+                <p>Password: {password}</p>
+                <p>Please change your password after your first login for security reasons.</p>
+                <p>Best regards,<br>EventHub Team</p>";
+
+            await _emailService.SendEmailAsync(user.Email, subject, message);
+        }
+
+        // GET: Admin/UsersManager/Create
+        public IActionResult Create()
+        {
+            ViewBag.AllRoles = _roleManager.Roles.ToList();
+            return View();
+        }
+
+        // POST: Admin/UsersManager/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(User user, List<string> selectedRoles)
+        {
+            if (ModelState.IsValid)
+            {
+                // Use email as username
+                user.UserName = user.Email;
+                
+                // Set creation time
+                user.Create_at = DateTime.UtcNow;
+                
+                // Generate a random password using the utility class
+                string password = PasswordGenerator.GenerateRandomPassword();
+                
+                // Create the user with the generated password
+                var result = await _userManager.CreateAsync(user, password);
+                
+                if (result.Succeeded)
+                {
+                    // Assign selected roles to the user
+                    if (selectedRoles != null && selectedRoles.Count > 0)
+                    {
+                        foreach (var role in selectedRoles)
+                        {
+                            await _userManager.AddToRoleAsync(user, role);
+                        }
+                    }
+                    
+                    // Send email with account details
+                    try
+                    {
+                        await SendAccountCreationEmail(user, password);
+                        TempData["Success"] = $"User account created successfully and login details sent to {user.Email}.";
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to send account creation email to {Email}", user.Email);
+                        TempData["Success"] = $"User account created successfully but failed to send email with login details.";
+                    }
+                    
+                    return RedirectToAction(nameof(Index));
+                }
+                
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
+            }
+            
+            ViewBag.AllRoles = _roleManager.Roles.ToList();
+            return View(user);
         }
     }
 }

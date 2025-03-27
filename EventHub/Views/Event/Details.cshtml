@@ -32,7 +32,10 @@
             <p>@Model.Description</p>
             @if (SignInManager.IsSignedIn(User))
             {
-                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#showRegisteredModal">Users registered</button>
+                @if (User.IsInRole("Admin"))
+                {
+                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#showRegisteredModal">Users registered</button>
+                }
                 <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#FeedbackModal">Feedback</button>
             }
         </div>

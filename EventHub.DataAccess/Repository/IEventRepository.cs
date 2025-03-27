@@ -14,5 +14,7 @@ namespace EventHub.DataAccess.Repository
         IEnumerable<Event> SearchEventByType(string searchQuery, string? typeName, List<Event>? tempEvents);
         IEnumerable<Event> GetAllByType(string? typeName);
         Task<IEnumerable<Event>> GetUpcomingEventsAsync(int count = 3);
+        Task<IEnumerable<Feedback>> GetEventFeedbacksAsync(int eventId);
+        Task<int> AddFeedbackAsync(Feedback feedback);
     }
 }

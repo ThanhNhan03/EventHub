@@ -155,5 +155,21 @@ namespace EventHub.DataAccess.Repository
                 .Take(count)
                 .ToListAsync();
         }
+
+        public async Task<int> AddFeedbackAsync(Feedback feedback)
+        {
+            await _eventManagementSystemDbContext.Feedbacks.AddAsync(feedback);
+            return await _eventManagementSystemDbContext.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<Feedback>> GetEventFeedbacksAsync(int eventId)
+        {
+            return await _eventManagementSystemDbContext.Feedbacks
+                .AsNoTracking()
+                .Include(f => f.User)
+                .Where(f => f.EventId == eventId)
+                .OrderByDescending(f => f.Id)
+                .ToListAsync();
+        }
     }
 }
